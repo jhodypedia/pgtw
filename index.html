@@ -1,169 +1,289 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Pansagateway - Authentikasi</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  
-  <!-- Bootstrap CSS -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Toastr CSS -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Generate QRIS Deposit — Test UI</title>
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- FontAwesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+
+  <!-- Toastr -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
-  
+
   <style>
-    body {
-      background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 15px;
+    body { background: #f7f9fb; }
+    .card { border-radius: 12px; box-shadow: 0 6px 18px rgba(23,40,70,0.06); }
+    .qr-box { background: white; border-radius: 12px; padding: 16px; text-align: center; }
+    .muted-small { font-size: .86rem; color: #6c757d; }
+    .hidden { display: none !important; }
+    @media (max-width: 576px) {
+      .qr-img { width: 260px; height: 260px; }
     }
-    .auth-card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 25px;
-      width: 100%;
-      max-width: 400px;
-      box-shadow: 0px 5px 20px rgba(0,0,0,0.2);
-    }
-    .fade-box {
-      display: none;
-    }
-    .form-control {
-      padding: 12px;
-      font-size: 16px;
-    }
-    button {
-      font-size: 16px;
-      padding: 12px;
-    }
-    h3 {
-      font-weight: 700;
-      margin-bottom: 15px;
-    }
-    p a {
-      text-decoration: none;
+    @media (min-width: 577px) {
+      .qr-img { width: 360px; height: 360px; }
     }
   </style>
 </head>
 <body>
 
-<div class="auth-card">
-  <div class="text-center">
-    <i class="fas fa-lock fa-2x mb-3 text-primary"></i>
-    <h3>Pansagateway</h3>
-  </div>
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-xl-8 col-lg-9 col-md-10">
+      <div class="card p-4">
+        <div class="d-flex align-items-center mb-3">
+          <i class="fa-solid fa-qrcode fa-2x text-primary me-3"></i>
+          <div>
+            <h5 class="mb-0">QRIS Deposit — Generator</h5>
+            <small class="muted-small">Masukkan API Key & jumlah lalu Generate</small>
+          </div>
+        </div>
 
-  <!-- Login Form -->
-  <div id="loginFormBox" class="fade-box" style="display:block;">
-    <h5 class="text-center mb-3">Login</h5>
-    <form id="loginForm">
-      <input type="email" class="form-control mb-2" id="loginEmail" placeholder="Email" required>
-      <input type="password" class="form-control mb-3" id="loginPassword" placeholder="Password" required>
-      <button type="submit" class="btn btn-primary w-100 mb-2">
-        <i class="fas fa-sign-in-alt"></i> Login
-      </button>
-    </form>
-    <p class="text-center mt-2">
-      Belum punya akun? 
-      <a href="#" id="showRegister"><i class="fas fa-user-plus"></i> Daftar</a>
-    </p>
-  </div>
+        <!-- Form -->
+        <form id="formGenerate" class="row g-3">
+          <div class="col-12 col-md-8">
+            <label class="form-label">API Key</label>
+            <input id="inputApiKey" class="form-control" placeholder="Masukkan API Key (x-api-key)" autocomplete="off" />
+            <div class="form-text">Contoh: 4rc0d3</div>
+          </div>
 
-  <!-- Register Form -->
-  <div id="registerFormBox" class="fade-box">
-    <h5 class="text-center mb-3">Register</h5>
-    <form id="registerForm">
-      <input type="text" class="form-control mb-2" id="regUsername" placeholder="Username" required>
-      <input type="email" class="form-control mb-2" id="regEmail" placeholder="Email" required>
-      <input type="password" class="form-control mb-2" id="regPassword" placeholder="Password" required>
-      <input type="text" class="form-control mb-3" id="regCode" placeholder="Activation Code" required>
-      <button type="submit" class="btn btn-success w-100 mb-2">
-        <i class="fas fa-user-plus"></i> Register
-      </button>
-    </form>
-    <p class="text-center mt-2">
-      Sudah punya akun? 
-      <a href="#" id="showLogin"><i class="fas fa-sign-in-alt"></i> Login</a>
-    </p>
+          <div class="col-12 col-md-4">
+            <label class="form-label">Amount (Rp)</label>
+            <input id="inputAmount" type="number" class="form-control" placeholder="50000" min="1000" step="1" />
+          </div>
+
+          <div class="col-12 d-flex gap-2">
+            <button id="btnGenerate" type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-play me-2"></i>Generate QRIS
+            </button>
+            <button id="btnReset" type="button" class="btn btn-outline-secondary">Reset</button>
+            <div class="ms-auto align-self-center muted-small">Backend: <span id="backendUrl">http://151.240.0.221:3000/api/deposit</span></div>
+          </div>
+        </form>
+
+        <!-- Result -->
+        <div id="resultCard" class="mt-4 hidden">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <div class="qr-box">
+                <div id="qrContainer" class="mb-3">
+                  <!-- QR image akan di-insert disini -->
+                  <img id="qrImage" src="" alt="QR Code" class="qr-img img-fluid" />
+                </div>
+                <div class="d-flex justify-content-center gap-2">
+                  <button id="btnDownload" class="btn btn-success btn-sm"><i class="fa-solid fa-download me-1"></i>Download PNG</button>
+                  <button id="btnCopyPayload" class="btn btn-outline-primary btn-sm"><i class="fa-regular fa-copy me-1"></i>Copy Payload</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-md-6">
+              <div class="p-3 bg-white rounded">
+                <h6>Detail Deposit</h6>
+                <dl class="row">
+                  <dt class="col-4">Deposit ID</dt>
+                  <dd class="col-8" id="outDepositId">-</dd>
+
+                  <dt class="col-4">Amount (Rp)</dt>
+                  <dd class="col-8" id="outAmount">-</dd>
+
+                  <dt class="col-4">Expired At</dt>
+                  <dd class="col-8" id="outExpired">-</dd>
+
+                  <dt class="col-4">Datetime</dt>
+                  <dd class="col-8" id="outDatetime">-</dd>
+
+                  <dt class="col-4">Status</dt>
+                  <dd class="col-8"><span id="outStatus" class="badge bg-warning text-dark">pending</span></dd>
+                </dl>
+
+                <div class="mt-3">
+                  <button id="btnBack" class="btn btn-outline-secondary"><i class="fa-solid fa-arrow-left me-1"></i>Buat Deposit Lagi</button>
+                </div>
+
+                <small class="muted-small mt-3 d-block">Catatan: Jangan sebarkan API key publik.</small>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="text-center mt-3 muted-small">Designed for testing — Pansagateway</div>
+    </div>
   </div>
 </div>
 
 <!-- jQuery -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<!-- Bootstrap Bundle -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<!-- Toastr JS -->
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<!-- Toastr -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<!-- QR generator (QRious) -->
+<script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
 
 <script>
-const API_BASE = "http://151.240.0.221:3000/api";
+(() => {
+  'use strict';
+  const backendUrl = 'http://151.240.0.221:3000/api/deposit'; // ubah jika perlu
+  $('#backendUrl').text(backendUrl);
 
-// Switch to Register
-$("#showRegister").click(function(e){
-  e.preventDefault();
-  $("#loginFormBox").fadeOut(300, function(){
-    $("#registerFormBox").fadeIn(300);
-  });
-});
+  const $form = $('#formGenerate');
+  const $api = $('#inputApiKey');
+  const $amount = $('#inputAmount');
+  const $result = $('#resultCard');
+  const $qrImg = $('#qrImage');
+  const $outDepositId = $('#outDepositId');
+  const $outAmount = $('#outAmount');
+  const $outExpired = $('#outExpired');
+  const $outDatetime = $('#outDatetime');
+  const $outStatus = $('#outStatus');
 
-// Switch to Login
-$("#showLogin").click(function(e){
-  e.preventDefault();
-  $("#registerFormBox").fadeOut(300, function(){
-    $("#loginFormBox").fadeIn(300);
-  });
-});
+  function formatDateISO(iso) {
+    try {
+      const d = new Date(iso);
+      return d.toLocaleString();
+    } catch (e) { return iso; }
+  }
 
-// Login
-$("#loginForm").submit(function(e){
-  e.preventDefault();
-  $.ajax({
-    url: API_BASE + "/login",
-    method: "POST",
-    contentType: "application/json",
-    data: JSON.stringify({
-      email: $("#loginEmail").val(),
-      password: $("#loginPassword").val()
-    }),
-    success: function(res){
-      localStorage.setItem("api_key", res.apikey);
-      toastr.success("Login berhasil");
-      setTimeout(()=> window.location.href="dashboard.html", 1000);
-    },
-    error: function(err){
-      toastr.error(err.responseJSON?.error || "Login gagal");
-    }
-  });
-});
+  function showLoading(btn, txt = 'Processing...') {
+    btn.prop('disabled', true).data('orig', btn.html()).html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> ' + txt);
+  }
+  function hideLoading(btn) {
+    btn.prop('disabled', false).html(btn.data('orig'));
+  }
 
-// Register
-$("#registerForm").submit(function(e){
-  e.preventDefault();
-  $.ajax({
-    url: API_BASE + "/register",
-    method: "POST",
-    contentType: "application/json",
-    data: JSON.stringify({
-      username: $("#regUsername").val(),
-      email: $("#regEmail").val(),
-      password: $("#regPassword").val(),
-      activation_code: $("#regCode").val()
-    }),
-    success: function(res){
-      toastr.success("Registrasi berhasil, API Key: " + res.apikey);
-      $("#registerFormBox").fadeOut(300, function(){
-        $("#loginFormBox").fadeIn(300);
+  // Generate QR from payload string (if backend returns payload)
+  function makeQrFromPayload(payload, size = 400) {
+    const qr = new QRious({ value: payload, size: size });
+    return qr.toDataURL('image/png');
+  }
+
+  // Download dataURL as PNG
+  function downloadDataUrl(dataUrl, filename = 'qris.png') {
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  // On submit
+  $form.on('submit', async function (e) {
+    e.preventDefault();
+    const key = $api.val().trim();
+    const amt = Number($amount.val());
+
+    if (!key) { toastr.error('API Key wajib'); return; }
+    if (!amt || amt <= 0) { toastr.error('Masukkan amount valid'); return; }
+
+    const $btn = $('#btnGenerate');
+    showLoading($btn, 'Generating...');
+
+    try {
+      const resp = await fetch(backendUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': key
+        },
+        body: JSON.stringify({ amount: Math.round(amt) })
       });
-    },
-    error: function(err){
-      toastr.error(err.responseJSON?.error || "Registrasi gagal");
+
+      const json = await resp.json().catch(()=>null);
+      if (!resp.ok) {
+        console.error('Backend error', resp.status, json);
+        toastr.error((json && json.error) ? json.error : 'Backend error: ' + resp.status);
+        hideLoading($btn);
+        return;
+      }
+
+      // Success: backend returns depositId, amount, qrImage or payload, expiredAt
+      const depositId = json.depositId || json.deposit_id || json.deposit_id;
+      const amountReturned = json.amount || json.amount;
+      const qrImage = json.qrImage || json.qr_image || null;
+      const payload = json.payload || json.payload_text || null;
+      const expiredAt = json.expiredAt || json.expired_at || null;
+      const datetime = new Date().toISOString();
+
+      // If backend provides qrImage (data url) -> use it
+      let dataUrl = null;
+      if (qrImage && typeof qrImage === 'string' && qrImage.startsWith('data:')) {
+        dataUrl = qrImage;
+      } else if (payload) {
+        // build QR using client-side QR lib
+        dataUrl = makeQrFromPayload(payload, 480);
+      } else if (json.finalPayload) {
+        dataUrl = makeQrFromPayload(json.finalPayload, 480);
+      } else {
+        // as fallback, convert amount to a small data: text QR (not ideal)
+        dataUrl = makeQrFromPayload(String(amountReturned || amt), 480);
+      }
+
+      // Populate UI
+      $qrImg.attr('src', dataUrl);
+      $outDepositId.text(depositId || '-');
+      $outAmount.text((amountReturned !== undefined ? amountReturned : amt).toLocaleString('id-ID'));
+      $outExpired.text(expiredAt ? formatDateISO(expiredAt) : '-');
+      $outDatetime.text(formatDateISO(datetime));
+      $outStatus.removeClass('bg-warning bg-success bg-danger').addClass('bg-success').text('pending -> generated');
+
+      // Save last payload in button data for copy
+      $('#btnCopyPayload').data('payload', payload || json.payload || json.finalPayload || '');
+
+      // Show result
+      $result.removeClass('hidden');
+      $('html,body').animate({ scrollTop: $result.offset().top - 20 }, 400);
+      toastr.success('QRIS generated');
+
+      // Hide the form to prevent duplicate create (user requested behavior)
+      $form.addClass('hidden');
+
+      hideLoading($btn);
+    } catch (err) {
+      console.error('Request failed', err);
+      toastr.error('Gagal menghubungi backend');
+      hideLoading($btn);
     }
   });
-});
+
+  // Reset button
+  $('#btnReset').on('click', function () {
+    $api.val('');
+    $amount.val('');
+    $result.addClass('hidden');
+    $form.removeClass('hidden');
+    $outDepositId.text('-'); $outAmount.text('-'); $outExpired.text('-'); $outDatetime.text('-');
+    $qrImg.attr('src', '');
+  });
+
+  // Download PNG
+  $('#btnDownload').on('click', function () {
+    const src = $qrImg.attr('src');
+    if (!src) { toastr.warning('QR belum tersedia'); return; }
+    downloadDataUrl(src, `qris_${Date.now()}.png`);
+  });
+
+  // Copy payload
+  $('#btnCopyPayload').on('click', function () {
+    const payload = $(this).data('payload') || '';
+    if (!payload) { toastr.info('Tidak ada payload untuk disalin'); return; }
+    navigator.clipboard.writeText(payload).then(() => {
+      toastr.success('Payload disalin ke clipboard');
+    }).catch(() => toastr.error('Gagal menyalin'));
+  });
+
+  // back to create again
+  $('#btnBack').on('click', function () {
+    $result.addClass('hidden');
+    $form.removeClass('hidden');
+  });
+
+})();
 </script>
 
 </body>
